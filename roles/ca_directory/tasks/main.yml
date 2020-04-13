@@ -1,0 +1,64 @@
+---
+  - name: Create the installation dir
+    file: path={{ dsa_home }} owner={{ dsa_user }} group={{ dsa_user }} state=directory mode=0777
+
+  - name: copy capki installation file 
+    copy:
+      src: "{{ capki_source_file_path }}"
+      dest: "{{ capki_dest_file_path }}"
+      force: yes
+      owner: "{{ dsa_user }}"
+      group: "{{ dsa_user }}"
+      mode: '0777'
+
+#CAPKI Installation
+  - name: Install capki
+    command: chdir={{ capki_dest_file_path }}/linux_x86_64/capki creates=/opt/CA/SharedComponents {{ capki_dest_file_path }}/linux_x86_64/capki/setup install caller=ETRDIR env=all verbose
+    become_user: "{{ dsa_user }}"
+    ignore_errors: true
+
+  - name: Copy the unattended response file
+    template: src=ca-dir.resp dest={{ dxserver_dest_file_path }}/ca-dir.resp
+
+#DXSERVER Installation
+  - name: Install dxserver
+    command: chdir={{ dxserver_dest_file_path }} creates={{ dxhome_path }} {{ dxserver_dest_file_path }}/dxsetup.sh -responsefile {{ dxserver_dest_file_path }}/ca-dir.resp -silent
+    
+  - name: Create a new file {{profile_path}}/dxhome.sh
+    file: path={{profile_path}} state=touch
+
+  # Copy /etc/profile.d/dxhome.sh with content
+  - copy:
+      content: |
+                #!/bin/bash
+                export DXHOME={{ dxhome_path }}
+      dest: /etc/profile.d/dxhome.sh
+
+  # Fix the executable permission
+  - name: Set executable permission
+    file: 
+      path: "{{profile_path}}/dxhome.sh"
+      owner: "{{ dsa_user }}" 
+      group: "{{ dsa_user }}" 
+      mode: '0777'
+      state: file 
+      recurse: no
+
+  # Export the env on th fly to make system wide change
+  - name: Source the file {{profile_path}}/dxhome.sh
+    action: shell source /etc/profile
+
+  - name: Create the psdsa datastore
+    command: creates="{{ dx_home }}/dxserver/config/servers/psdsa.dxi" /bin/sh -l -c "dxnewdsa psdsa 10389 'o=psdsa,c=US'"
+    become_user: "{{ dsa_user }}"
+
+  # - name: restart server
+  #   shell: |
+  #     shutdown -r +1
+  #   async: 1
+  #   poll: 0
+  #   become_user: root
+  #   become: yes
+  
+  # - name: waiting for server to come back
+  #   local_action: wait_for host={{ inventory_hostname }} state=started delay=05 timeout=240

@@ -1,0 +1,81 @@
+---
+  - name: Set the required .profile for smuser
+    template: src=profile dest=/home/{{ sm_user }}/.profile
+    become_user: "{{ sm_user }}"
+
+  - name: Run ca-ps-env.ksh
+    command: /bin/ksh -l -c "source /home/smuser/CA/siteminder/ca_ps_env.ksh"
+    become_user: "{{ sm_user }}"
+  
+  - name: Stop the psdsa DSA
+    command: /bin/sh -l -c "dxserver stop psdsa"
+    become_user: "{{ dsa_user }}"
+
+  - name: Copy the schema.ldif to dxserver/bin
+    template: src=schema.ldif dest={{ dxhome_path }}/bin
+    become_user: "{{ dsa_user }}"
+
+  - name: Load schema into psdsa
+    command: /bin/sh -l -c "dxloaddb psdsa {{ dxhome_path }}/bin/schema.ldif"
+    become_user: "{{ dsa_user }}"
+    retries: 5
+    delay: 5
+    register: result
+    until: result.rc == 0
+    ignore_errors: yes
+
+  - name: Start the psdsa DSA
+    command: /bin/sh -l -c "dxserver start psdsa"
+    become_user: "{{ dsa_user }}"
+
+    # Point the Policy Server to the Policy Store
+  - name: Register the SiteMinder Policy Store
+    command: /bin/ksh -l -c "smldapsetup reg -h{{ FQDN }} -p10389 -duid=admin,o=psdsa,c=US -w{{ common_password }} -ro=psdsa,c=US -v"
+    become_user: "{{ sm_user }}"
+  - debug:
+    msg: System {{ inventory_hostname }} and {{ FQDN }}
+
+  - name: Run XPSDDInstall SmMaster.xdd
+    command: chdir={{ sm_home }}/siteminder/xps/dd /bin/ksh -l -c "XPSDDInstall SmMaster.xdd"
+    become_user: "{{ sm_user }}"
+  
+  - name: Run XPSImport smpolicy.xml
+    command: chdir={{ sm_home }}/siteminder/db /bin/ksh -l -c "XPSImport smpolicy.xml"
+    become_user: "{{ sm_user }}"
+
+  - name: Run XPSImport smpolicy-secure.xml 
+    command: chdir={{ sm_home }}/siteminder/db /bin/ksh -l -c "XPSImport smpolicy-secure.xml"
+    become_user: "{{ sm_user }}"
+
+  - name: Run XPSImport ampolicy.xml
+    command: chdir={{ sm_home }}/siteminder/db /bin/ksh -l -c "XPSImport ampolicy.xml"
+    become_user: "{{ sm_user }}"
+
+  - name: Run XPSImport fedpolicy-12.5.xml
+    command: chdir={{ sm_home }}/siteminder/db /bin/ksh -l -c "XPSImport fedpolicy-12.5.xml"
+    become_user: "{{ sm_user }}"
+
+  - name: Run XPSImport default-fedobjects-config.xml
+    command: chdir={{ sm_home }}/siteminder/db /bin/ksh -l -c "XPSImport default-fedobjects-config.xml"
+    become_user: "{{ sm_user }}"
+
+  - name: Copy smreg
+    copy: src={{ smreg_path }} dest={{ sm_home }}/siteminder/bin/smreg mode=777 owner={{ sm_user }} group={{ sm_user }}
+
+  - name: Set the SiteMinder admin password
+    command: /bin/ksh -l -c "smreg -su {{ common_password }}"
+    become_user: "{{ sm_user }}"
+
+  - name: Run XPSRegClient
+    command: /bin/ksh -l -c "XPSRegClient {{ sm_admin_user }}:{{ sm_admin_password }} -adminui-setup -vI"
+    become_user: "{{ sm_user }}"
+
+  # - name: Flush the WAMUI Cache (do not forget to re-run XPSRegClient)
+  #   shell: rm -rf /home/smuser/CA/siteminder/adminui/server/default/data/derby/siteminder/*
+
+  - name: Start the SiteMinder Policy Server
+    command: /bin/ksh -l -c "start-ps"
+    become_user: "{{ sm_user }}"
+    ignore_errors: yes
+
+

@@ -1,0 +1,52 @@
+---
+
+  common_password: interOP@123
+
+# JAVA Variables 
+
+  profile_path: /etc/profile.d
+  java_home: /opt/jdk1.8.0_241
+
+# policy Server Variables
+  sm_user: smuser
+  sm_home: /home/smuser/CA
+  ps_source_file_path: /tmp/GEN500000000001019/ca-ps-12.8-linux-x86-64.bin
+  ps_dest_file_path: /tmp/ca-ps-12.8-linux-x86-64.bin
+  smreg_path: /tmp/GEN500000000001019/smreg
+
+# ca-directory Variables
+  dsa_user: dsa
+  dsa_group: dsa
+  dsa_home: /opt/CA
+  capki_source_file_path: /tmp/DVD500000000002266/linux_x86_64
+  capki_dest_file_path: /tmp
+  dxserver_dest_file_path: /tmp/linux_x86_64/dxserver/install
+  dx_home: /opt/CA/Directory
+  dxhome_path: /opt/CA/Directory/dxserver
+  psdsa_name: psdsa
+  psdsa_port: 10389
+  psdsa_dn: "o=psdsa,c=US"
+
+  # AdminUI Variables
+  adminui_prereq_source_path: /tmp/GEN500000000001015/adminui-pre-req-12.8-linux-x86-64.bin
+  adminui_prereq_dest_path: /tmp/adminui-pre-req-12.8-linux-x86-64.bin
+  adminui_source_path: /tmp/GEN500000000001017/ca-adminui-12.8-linux-x86-64.bin
+  adminui_dest_path: /tmp/ca-adminui-12.8-linux-x86-64.bin
+
+  sm_admin_user: siteminder
+  sm_admin_password: "{{ common_password }}"
+
+  dsa_admin_password: "{{ common_password }}"
+  dsa_admin_port: 2123
+
+  sm_encryption_key: "{{ common_password }}"
+
+# Policy_Store Values:
+  # default_policystore_IP: 10.131.158.204
+  # default_policystore_port: 10389
+  # default_policystore_admindn: uid=admin,o=psdsa,c=US
+  # root_dn: o=psdsa,c=US
+
+  domain: .dhcp.broadcom.net
+
+  FQDN: "{{ inventory_hostname + domain }}"

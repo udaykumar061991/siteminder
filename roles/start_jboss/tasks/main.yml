@@ -1,0 +1,19 @@
+---
+
+  - name: Start the psdsa DSA
+    command: /bin/sh -l -c "dxserver start psdsa"
+    become_user: "{{ dsa_user }}"
+
+  - name: Start the SiteMinder Policy Server
+    command: /bin/ksh -l -c "start-ps"
+    become_user: "{{ sm_user }}"
+    ignore_errors: yes
+
+  - name: Start jboss server
+    shell: /home/smuser/CA/siteminder/adminui/bin/standalone.sh
+    become_user: "{{ sm_user }}"
+
+  # - name: Start the SiteMinder Policy Server
+  #   command: /bin/ksh -l -c "/home/smuser/CA/siteminder/bin/smpolsrv"
+  #   become_user: "{{ sm_user }}"
+  #   ignore_errors: yes

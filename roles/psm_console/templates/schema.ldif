@@ -1,0 +1,26 @@
+dn: ou=Netegrity,o=psdsa,c=US
+objectClass: organizationalUnit
+ou: Netegrity
+
+dn: ou=SiteMinder,ou=Netegrity,o=psdsa,c=US
+objectClass: organizationalUnit
+ou: SiteMinder
+
+dn: ou=PolicySvr4,ou=SiteMinder,ou=Netegrity,o=psdsa,c=US
+objectClass: organizationalUnit
+ou: PolicySvr4
+
+dn: ou=XPS,ou=PolicySvr4,ou=SiteMinder,ou=Netegrity,o=psdsa,c=US
+objectClass: organizationalUnit
+ou: XPS
+
+dn: uid=admin,o=psdsa,c=US
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: admin
+givenName: admin
+sn: admin
+uid: admin
+userPassword:{{ common_password }}

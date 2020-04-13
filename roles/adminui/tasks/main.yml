@@ -1,0 +1,32 @@
+---
+  - name: copy adminui prerequisites installation file 
+    copy:
+      src: "{{ adminui_prereq_source_path }}"
+      dest: "{{ adminui_prereq_dest_path }}"
+      owner: "{{ sm_user }}"
+      group: "{{ sm_user }}"
+      mode: '0777'
+
+  - name: copy adminui installation file 
+    copy:
+      src: "{{ adminui_source_path }}"
+      dest: "{{ adminui_dest_path }}"
+      owner: "{{ sm_user }}"
+      group: "{{ sm_user }}"
+      mode: '0777'
+
+  - name: Copy the unattended installation response file (pre-req)
+    template: src=prereq-unattended.properties dest=/tmp/prereq-unattended.properties
+
+  - name: Copy the unattended installation response file (ui)
+    template: src=adminui-unattended.properties dest=/tmp/adminui-unattended.properties
+
+  - name: Install AdminUI Pre-requisites (warning, no check !)
+    command: creates={{ sm_home }}/siteminder/adminui {{ adminui_prereq_dest_path }} -f /tmp/prereq-unattended.properties -i silent
+    become_user: "{{ sm_user }}"
+    ignore_errors: yes
+
+  - name: Install AdminUI (warning, no check !)
+    command: creates={{ sm_home }}/siteminder/adminui/SiteMinder {{ adminui_dest_path }} -f /tmp/adminui-unattended.properties -i silent
+    become_user: "{{ sm_user }}"
+    ignore_errors: yes

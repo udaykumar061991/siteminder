@@ -1,0 +1,26 @@
+---
+  - name: Ensure the RNGD service is started ! Otherwise, the SiteMinder server will be very slow...
+    service: name=rngd state=started enabled=yes
+    tags: test
+
+  - name: Start the SiteMinder Policy Server
+    command: /bin/ksh -l -c "start-ps"
+    become_user: "{{ sm_user }}"
+    tags: start
+
+  - name: Start the SiteMinder WAMUI
+    command: /bin/ksh -l -c "nohup {{ sm_home }}/siteminder/adminui/bin/run.sh &"
+    become_user: "{{ sm_user }}"
+    tags: start
+
+  - name: Stop the SiteMinder WAMUI
+    command: /bin/ksh -l -c "nohup {{ sm_home }}/siteminder/adminui/bin/shutdown.sh &"
+    become_user: "{{ sm_user }}"
+    tags: stop
+
+  - name: Stop the SiteMinder Policy Server
+    command: /bin/ksh -l -c "stop-ps"
+    become_user: "{{ sm_user }}"
+    register: stop_ps
+    failed_when: "stop_ps.rc != 1"
+    tags: stop

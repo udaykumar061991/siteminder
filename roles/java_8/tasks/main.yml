@@ -1,0 +1,37 @@
+- name: Extract the Oracle JDK 8 archive
+  unarchive: 
+    src=/tmp/jdk-8u241-linux-x64.tar
+    dest=/opt
+
+- name: set java file with full permissions
+  file:
+    path: /opt/jdk1.8.0_241
+    owner: "{{ sm_user }}"
+    group: "{{ sm_user }}"
+    mode: '0777'
+
+# Create a blank file
+- name: Create a new file {{profile_path}}/java_home.sh
+  file: path={{profile_path}} state=touch
+
+# Copy /etc/profile.d/java_home.sh with content
+- copy:
+    content: |
+              #!/bin/bash
+              export JAVA_HOME={{ java_home }}
+              export JRE_HOME={{ java_home }}/jre
+    dest: /etc/profile.d/java_home.sh
+
+# Fix the executable permission
+- name: Set executable perission
+  file: 
+    path: "{{profile_path}}/java_home.sh"
+    owner: "{{ sm_user }}" 
+    group: "{{ sm_user }}" 
+    mode: '0777'
+    state: file 
+    recurse: no
+
+# Export the env on th fly to make system wide change
+- name: Source the file {{profile_path}}/java_home.sh
+  action: shell source /etc/profile

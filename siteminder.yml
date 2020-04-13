@@ -1,0 +1,14 @@
+---
+- hosts: policy_servers
+  become: yes
+  roles:
+    - disable_firewalld
+    - prerequisites
+    - java_8
+    - ca_directory
+    - policy_server
+    - policy_store
+    - psm_console
+    - adminui
+    - start_jboss
+

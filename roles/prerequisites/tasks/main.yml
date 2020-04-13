@@ -1,0 +1,60 @@
+---
+  - name: site-minder on redhat family
+    assert:
+      that:
+        - "ansible_userspace_bits == '64'"
+        - "ansible_os_family == 'RedHat'"
+
+  - name: Install libstdc++
+    yum: name=libstdc++ state=installed
+
+  - name: Install KSH
+    yum: name=ksh state=installed
+
+  - name: Install xauth 
+    yum: name=xorg-x11-xauth state=installed
+
+  - name: Install libXrender
+    yum: name=libXrender state=installed
+
+  - name: Install libXtst
+    yum: name=libXtst state=installed
+
+  - name: Install RNGD
+    yum: name=rng-tools state=installed
+
+  - name: Install the RNGD configuration
+    command: rngd -r /dev/device_name -o /dev/random -b  
+
+  - name: Restart RNGD and make sure it is enabled
+    service: name=rngd state=restarted enabled=yes
+
+  - name: Install patch (needed by ansible)
+    yum: name=patch state=installed
+  
+  - name: Install TCSH
+    yum: name=tcsh state=installed
+
+  - name: Install AT
+    yum: name=at state=installed
+
+  - name: Create the 'smuser' and 'dsa' user
+    shell: |
+      useradd -p $(openssl passwd -1 interOP@123) dsa
+      useradd -p $(openssl passwd -1 interOP@123) smuser
+    become_user: root
+    ignore_errors: true
+
+  - name: Ensure smuser is explicitly allowed to sudo with no password
+    lineinfile:
+      dest: /etc/sudoers
+      state: present
+      line: '%{{ sm_user }} ALL=(ALL) NOPASSWD: ALL'
+      validate: 'visudo -cf %s'
+
+  - name: "Ensure dsa is explicitly allowed to sudo with no password"
+    lineinfile:
+      dest: /etc/sudoers
+      state: present
+      line: '%{{ dsa_user }} ALL=(ALL) NOPASSWD: ALL'
+      validate: 'visudo -cf %s'

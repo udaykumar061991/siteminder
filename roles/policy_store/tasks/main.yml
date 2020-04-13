@@ -1,0 +1,43 @@
+---
+  # Create Policy Store Schema
+  - name: Copy netegrity.dxc to the right place 
+    command: cp -r {{ sm_home }}/siteminder/eTrust/netegrity.dxc {{ dxhome_path }}/config/schema/netegrity.dxc
+
+  - name: Copy etrust.dxc to the right place 
+    command: cp -r {{ sm_home }}/siteminder/xps/db/etrust.dxc {{ dxhome_path }}/config/schema/etrust.dxc
+
+  - name: Renaming default.dxg to psdsa.dxg file
+    command: creates="{{ dxhome_path }}/config/schema/psdsa.dxg" mv {{ dxhome_path }}/config/schema/default.dxg {{ dxhome_path }}/config/schema/psdsa.dxg
+    become_user: "{{ dsa_user }}"
+
+  - name: Insert configuration lines in psdsa.dxg
+    blockinfile:
+      block: "{{ lookup('file', '../templates/psdsa_dxg_content') }}"
+      dest: "{{ dxhome_path }}/config/schema/psdsa.dxg"
+    become_user: "{{ dsa_user }}"
+
+  - name: Set config 'ignore-name-bindings'
+    lineinfile: dest={{ dx_home }}/dxserver/config/servers/psdsa.dxi state=present insertafter="EOF" line='set ignore-name-bindings = true;'
+    become_user: "{{ dsa_user }}"
+
+  - name: rename default.dxc to psdsa.dxc
+    command: creates="{{ dxhome_path }}/config/limits/psdsa.dxc" mv {{ dxhome_path }}/config/limits/default.dxc {{ dxhome_path }}/config/limits/psdsa.dxc
+    become_user: "{{ dsa_user }}"
+
+  - name: Copy file dxc content to psdsa.dxc
+    template:
+      src: psdsa_dxc_content
+      dest: "{{ dxhome_path }}/config/limits/psdsa.dxc"
+      backup: yes
+      owner: "{{ dsa_user }}"
+      group: "{{ dsa_user }}"
+      mode: 0777
+    become_user: "{{ dsa_user }}"
+
+  - name: Rename default.dxg to psdsa.dxg in dxi file for schema
+    lineinfile: dest={{ dxhome_path }}/config/servers/psdsa.dxi state=present regexp='^source "../schema/[a-z]+.dxg";' line='source "../schema/psdsa.dxg";'
+    become_user: "{{ dsa_user }}"
+
+  - name: Rename default.dxc to psdsa.dxc in dxi file for limits
+    lineinfile: dest={{ dxhome_path }}/config/servers/psdsa.dxi state=present regexp='^source "../limits/[a-z]+.dxc";' line='source "../limits/psdsa.dxc";'
+    become_user: "{{ dsa_user }}"

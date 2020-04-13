@@ -1,0 +1,20 @@
+---
+  - name: Create the installation dir
+    file: path={{ sm_home }} owner={{ sm_user }} group={{ sm_user }} state=directory mode=0777
+
+  - name: copy policy server installation file 
+    copy:
+      src: "{{ ps_source_file_path }}"
+      dest: "{{ ps_dest_file_path }}"
+      owner: "{{ sm_user }}"
+      group: "{{ sm_user }}"
+      mode: '0700'
+
+  - name: Copy the unattended installation response file
+    template: src=ca-ps-installer.properties dest=/tmp/ca-ps-installer.properties
+
+  - name: Install SiteMinder (warning, no check !)
+    command: creates={{ sm_home }}/siteminder chdir=/tmp ./ca-ps-12.8-linux-x86-64.bin -f /tmp/ca-ps-installer.properties -i silent
+    become_user: "{{ sm_user }}"
+    ignore_errors: yes
+
